@@ -107,6 +107,9 @@
               d.close = +d.Close;
             });
 
+            $(".container").append("<h3><%= ticker %></h3>");
+            $(".container").append("<h5><%= beg_date %> to <%= end_date %></h5>");
+
             x.domain(d3.extent(data, function(d) { return d.date; }));
             y.domain(d3.extent(data, function(d) { return d.close; }));
 
