@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <style>
+
+    .axis path, .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .line {
+      fill: none;
+      stroke: steelblue;
+      stroke-width: 1.5px;
+    }
+
+    body {
+      position: absolute;
+      top: 20px;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    svg {
+      font: 10px sans-serif;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      margin-left: -500px;
+      margin-top: -250px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Stock Price Chart</h1>
+    <form class="form-horizontal">
+      <div class="form-group">
+        <label class="col-xs-2 control-label">Ticker</label>
+        <div class="col-xs-2">
+          <input type="text" name='ticker' class='form-control' placeholder="ex. YHOO" required="required"></input> 
+        </div>
+        <label class="col-xs-1 control-label">From</label>
+        <div class="col-xs-2">
+          <input type="date" name='beg_date' class='form-control' placeholder="mm/dd/yyyy" required="required"></input>  
+        </div>
+        <label class="col-xs-1 control-label">To</label>
+        <div class="col-xs-2">
+          <input type="date" name='end_date' class='form-control' placeholder="mm/dd/yyyy" required="required"></input>
+        </div>
+        <input type="submit" value="Submit" class='btn btn-primary'>
+      </div>
+    </form>
+    <% if (url != ""){ %>
+      <script>
+        var margin = {top: 20, right: 20, bottom: 30, left: 50},
+            width = 960,
+            height = 500;
+
+        var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+        var x = d3.time.scale()
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var color = d3.scale.category10();
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+        var line = d3.svg.line()
+            .x(function(d) { return x(d.date); })
+            .y(function(d) { return y(d.Close); });
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        d3.json("<%= url %>", function(error, json){
+          if (json.query.results == null){
+            $(".container").append('<div class="alert alert-danger" role="alert">Bad request.  Please try entering a smaller date range.</div>')
+          } else {
+            data = json.query.results.quote;
+            data.forEach(function(d) {
+              d.date = parseDate(d['Date']);
+              d.close = +d.Close;
+            });
+
+            x.domain(d3.extent(data, function(d) { return d.date; }));
+            y.domain(d3.extent(data, function(d) { return d.close; }));
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+              .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("Price ($)");
+
+            svg.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line);
+          }
+        });
+      </script>
+    <% } %>
+  </div>
+</body>
+</html>
